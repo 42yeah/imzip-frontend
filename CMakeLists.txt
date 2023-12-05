@@ -56,11 +56,14 @@ target_link_libraries(imzip sokol)
 if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
     # use our own minimal shell.html
-    target_link_options(imzip PRIVATE --shell-file ../sokol/shell.html)
+    target_link_options(imzip PRIVATE -sEXPORTED_FUNCTIONS=_main,_images_selected)
+    # File system support: https://emscripten.org/docs/api_reference/Filesystem-API.html#including-file-system-support
+    target_link_options(imzip PRIVATE -sWASMFS -sFORCE_FILESYSTEM -sEXPORTED_RUNTIME_METHODS=['FS'])
+    target_link_options(imzip PRIVATE --shell-file ${PROJECT_SOURCE_DIR}/shell.html)
     # link with WebGL2
     target_link_options(imzip PRIVATE -sUSE_WEBGL2=1)
     # WASM+JS size optimizations
-    target_link_options(imzip PRIVATE -sNO_FILESYSTEM=1 -sASSERTIONS=0 -sMALLOC=emmalloc --closure=1)
+    target_link_options(imzip PRIVATE -sASSERTIONS=0 -sMALLOC=emmalloc --closure=1)
 endif()
 
 # explicitly strip dead code

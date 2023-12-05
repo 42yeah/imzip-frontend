@@ -25,10 +25,15 @@
             image-rendering: pixelated;
             -ms-interpolation-mode: nearest-neighbor;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
   </head>
   <body>
     <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <input id="file-input" type="file" multiple onchange="upload()">
     <script type='text/javascript'>
       var Module = {
         preRun: [],
@@ -58,6 +63,27 @@
       window.onerror = function() {
         console.log("onerror: " + event.message);
       };
+      const files = document.querySelector("#file-input");
+
+      function upload() {
+        // After images are selected, we put them into MEMFS.
+        // Relevant: https://github.com/emscripten-core/emscripten/issues/6061
+
+        for (let i = 0; i < files.files.length; i++) {
+          const reader = new FileReader();
+
+          function fileLoaded(e) {
+            // TODO: catch errors
+
+          }
+
+          reader.addEventListener("loadend", fileLoaded);
+          reader.readAsArrayBuffer(files.files[i]);
+          console.log("Reading");
+        }
+        console.log("Um");
+      }
+
     </script>
     {{{ SCRIPT }}}
   </body>

@@ -7,11 +7,58 @@
 #include "sokol_glue.h"
 #include <imgui.h>
 #include "sokol_imgui.h"
+#include <cmath>
+#include <iostream>
+#include <emscripten/emscripten.h>
 
 static struct
 {
     sg_pass_action pass_action;
+    ImVec2 fold_size;
+    int quality;
 } state;
+
+extern "C"
+{
+    // https://stackoverflow.com/questions/61496876/how-can-i-load-a-file-from-a-html-input-into-emscriptens-memfs-file-system
+    void images_selected()
+    {
+        std::cout << "Images selected!" << std::endl;
+    }
+
+    int main(int argc, char *argv[]);
+}
+
+void imzip_ui()
+{
+    ImGui::SetNextWindowPos({ 0.0f, 0.0f }, ImGuiCond_Once);
+    ImGui::SetNextWindowSize({ fminf(800.0f, (float) sapp_width()), (float) sapp_height() }, ImGuiCond_Always);
+    if (ImGui::Begin("Windowless", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
+    ))
+    {
+        ImGui::TextWrapped("IMZIP by 42yeah");
+        ImGui::Separator();
+        ImGui::TextWrapped("ImZip is an online image compression utility written by me, 42yeah. It is written in WebAssembly and is therefore crazy fast. Drag & drop photos here and download their compressed versions, in real time.");
+
+        if (ImGui::CollapsingHeader("How imzip works"))
+        {
+            ImGui::TextWrapped("ImZip performs easy, performant image compression by doing the following to each input images:");
+            ImGui::TextWrapped("1. If the image is bigger than the 'threshold' (%.0f, %.0f), the image size is halved;", state.fold_size.x, state.fold_size.y);
+            ImGui::TextWrapped("2. The image is re-encoded via the JPG encoder by stb (quality: %d)", state.quality);
+        }
+
+        if (ImGui::Button("Upload images ..."))
+        {
+            EM_ASM(
+                document.querySelector("#file-input").click();
+            );
+            // std::cout << "Unbelievable." << std::endl;
+        }
+        ImGui::SameLine(); ImGui::TextWrapped("%d images selected.", 0);
+    }
+    ImGui::End();
+}
 
 static void init(void)
 {
@@ -23,8 +70,10 @@ static void init(void)
     // initial clear color
     state.pass_action.colors[0] = {
         .load_action = SG_LOADACTION_CLEAR,
-        .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f }
+        .clear_value = { 0.1f, 0.1f, 0.2f, 1.0f }
     };
+    state.fold_size = { 2560.0f, 1440.0f };
+    state.quality = 80;
 }
 
 static void frame(void)
@@ -38,13 +87,7 @@ static void frame(void)
     simgui_new_frame(&new_frame_desc);
 
     /*=== UI CODE STARTS HERE ===*/
-    ImGui::SetNextWindowPos({ 10.0f, 10.0f }, ImGuiCond_Once);
-    ImGui::SetNextWindowSize({ 400.0f, 100.0f }, ImGuiCond_Once);
-    if (ImGui::Begin("Hello ImGui!", nullptr, ImGuiWindowFlags_None))
-    {
-        ImGui::ColorEdit3("Background", &state.pass_action.colors[0].clear_value.r, ImGuiColorEditFlags_None);
-    }
-    ImGui::End();
+    imzip_ui();
     /*=== UI CODE ENDS HERE ===*/
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
