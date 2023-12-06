@@ -34,6 +34,7 @@
   <body>
     <canvas class="game" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
     <input id="file-input" type="file" multiple onchange="upload()">
+    <a download="" href="#" id="download">FAKE DOWNLOAD LINK</a>
     <script type='text/javascript'>
       var Module = {
         preRun: [],
@@ -64,24 +65,41 @@
         console.log("onerror: " + event.message);
       };
       const files = document.querySelector("#file-input");
+      let doneFiles = 0;
+
+      function uploadDone() {
+        let fileInfo = "";
+        for (let i = 0; i < files.files.length; i++) {
+          fileInfo += "/" + files.files[i].name + "\n";
+        }
+        Module.FS.writeFile("/info.txt", fileInfo);
+
+        Module._images_selected();
+      }
 
       function upload() {
         // After images are selected, we put them into MEMFS.
         // Relevant: https://github.com/emscripten-core/emscripten/issues/6061
+        doneFiles = 0;
 
         for (let i = 0; i < files.files.length; i++) {
           const reader = new FileReader();
 
           function fileLoaded(e) {
             // TODO: catch errors
-
+            const buffer = new Uint8Array(reader.result);
+            Module.FS.writeFile("/" + files.files[i].name, buffer);
+            console.log("File written: ", files.files[i].name);
+            doneFiles++;
+            console.log(doneFiles, files.files.length);
+            if (doneFiles == files.files.length) {
+              uploadDone();
+            }
           }
 
           reader.addEventListener("loadend", fileLoaded);
           reader.readAsArrayBuffer(files.files[i]);
-          console.log("Reading");
         }
-        console.log("Um");
       }
 
     </script>

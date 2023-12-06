@@ -1,3 +1,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui
+[submodule "imzip"]
+	path = imzip
+	url = git@github.com:42yeah/imzip

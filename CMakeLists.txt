@@ -43,14 +43,19 @@ endif()
 target_link_libraries(sokol PUBLIC imgui)
 target_include_directories(sokol INTERFACE sokol)
 
+#=== LIBRARY: miniz
+add_library(miniz miniz/miniz.c)
+target_include_directories(miniz INTERFACE miniz)
+
 #=== EXECUTABLE: imzip
+set(IMZIP_FRONTEND_SRC main.cpp image.cpp)
 if(CMAKE_SYSTEM_NAME STREQUAL Windows)
-    add_executable(imzip WIN32 main.cpp)
+    add_executable(imzip WIN32 ${IMZIP_FRONTEND_SRC})
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT imzip)
 else()
-    add_executable(imzip main.cpp)
+    add_executable(imzip ${IMZIP_FRONTEND_SRC})
 endif()
-target_link_libraries(imzip sokol)
+target_link_libraries(imzip sokol miniz)
 
 # Emscripten-specific linker options
 if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
@@ -58,12 +63,12 @@ if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     # use our own minimal shell.html
     target_link_options(imzip PRIVATE -sEXPORTED_FUNCTIONS=_main,_images_selected)
     # File system support: https://emscripten.org/docs/api_reference/Filesystem-API.html#including-file-system-support
-    target_link_options(imzip PRIVATE -sWASMFS -sFORCE_FILESYSTEM -sEXPORTED_RUNTIME_METHODS=['FS'])
+    target_link_options(imzip PRIVATE -sWASMFS -sFORCE_FILESYSTEM -sEXPORTED_RUNTIME_METHODS=['FS'] -sALLOW_MEMORY_GROWTH)
     target_link_options(imzip PRIVATE --shell-file ${PROJECT_SOURCE_DIR}/shell.html)
     # link with WebGL2
     target_link_options(imzip PRIVATE -sUSE_WEBGL2=1)
     # WASM+JS size optimizations
-    target_link_options(imzip PRIVATE -sASSERTIONS=0 -sMALLOC=emmalloc --closure=1)
+    target_link_options(imzip PRIVATE -sASSERTIONS -sMALLOC=emmalloc --closure=1)
 endif()
 
 # explicitly strip dead code
