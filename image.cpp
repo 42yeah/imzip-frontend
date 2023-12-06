@@ -239,7 +239,31 @@ bool Image::load(const std::string &path)
         return false;
     }
 
-    image.reset(data);
+    if (ch == 3)
+    {
+        ch = 4;
+        image.reset(new CComp[w * h * ch]);
+        int src_offset = 0, dest_offset = 0;
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                src_offset = (y * w + x) * 3;
+                dest_offset = (y * w + x) * 4;
+                image[dest_offset + 0] = data[src_offset + 0];
+                image[dest_offset + 1] = data[src_offset + 1];
+                image[dest_offset + 2] = data[src_offset + 2];
+                image[dest_offset + 3] = (CComp) 255;
+            }
+        }
+        stbi_image_free(data);
+        initialized = true;
+    }
+    else
+    {
+        image.reset(data);
+    }
+
     aspect = (float) w / h;
     file_name = path;
 

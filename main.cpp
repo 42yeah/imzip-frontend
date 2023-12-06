@@ -145,9 +145,9 @@ extern "C"
     // https://stackoverflow.com/questions/61496876/how-can-i-load-a-file-from-a-html-input-into-emscriptens-memfs-file-system
     void images_selected()
     {
-        state.image_windows.clear();
-        state.images.clear();
-        state.files.clear();
+        // state.image_windows.clear();
+        // state.images.clear();
+        // state.files.clear();
 
         std::ifstream reader("info.txt");
         if (!reader.good())
@@ -199,25 +199,37 @@ void imzip_ui()
             ImGui::InputText("Archive name", state.archive_name, sizeof(state.archive_name));
         }
 
+        if (ImGui::Button("Upload images ..."))
+        {
+            EM_ASM(
+                if (navigator.userAgent.indexOf("iPhone OS") != -1 ||
+                    (navigator.userAgent.indexOf("Intel Mac OS X") != -1) && navigator.userAgent.indexOf("Chrome") == -1) {
+                    document.querySelector(".fuck-safari").classList.remove("hidden");
+                }
+                document.querySelector("#file-input").click();
+            );
+        }
         if (state.images.size() > 0)
         {
+            ImGui::SameLine();
             if (ImGui::Button("Compress!"))
             {
                 compress_all_images();
             }
-            ImGui::SameLine();
-        }
-        if (ImGui::Button("Upload images ..."))
-        {
-            EM_ASM(
-                document.querySelector("#file-input").click();
-            );
         }
         ImGui::SameLine(); ImGui::TextWrapped("%d images selected.", (int) state.files.size());
 
         if (state.images.size() > 0)
         {
             ImGui::TextColored({ 0.8f, 0.8f, 0.8f, 1.0f }, "GALLERY");
+            if (ImGui::Button("Clear all"))
+            {
+                state.images.clear();
+                state.files.clear();
+                state.image_windows.clear();
+                state.event_frame = EVENT_FRAME_DRAG;
+            }
+
             float sum_width = 0.0f;
             int num_lines = 0;
             for (int i = 0; i < state.images.size(); i++)
@@ -284,9 +296,10 @@ void imzip_ui()
             {
                 it->display = false;
                 state.images.erase(state.images.begin() + it->image_idx);
+                state.files.erase(state.files.begin() + it->image_idx);
             }
 
-            float w = fminf(sapp_widthf(), fminf(WINDOW_WIDTH, im->w));
+            float w = fminf(sapp_widthf(), fminf(WINDOW_WIDTH, im->w * 0.5f));
 
             if (it->display)
                 ImGui::Image(simgui_imtextureid(im->imgui_image), { w, w / im->aspect }, { 0.0f, 0.0f }, { 1.0f, 1.0f });
@@ -344,7 +357,6 @@ static void frame(void)
 
     /*=== UI CODE STARTS HERE ===*/
     imzip_ui();
-    ImGui::ShowDemoWindow();
     /*=== UI CODE ENDS HERE ===*/
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
