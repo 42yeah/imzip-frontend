@@ -57,6 +57,13 @@ EM_JS(void, download, (const char *path), {
     downloadEl.click();
 });
 
+EM_JS(void, linkTo, (const char *url), {
+    const urlStr = UTF8ToString(url);
+    const downloadEl = document.querySelector("#download");
+    downloadEl.href = urlStr;
+    downloadEl.click();
+});
+
 void compress_all_images()
 {
     std::vector<std::shared_ptr<CompressedInfo> > infos;
@@ -186,11 +193,33 @@ void imzip_ui()
         ImGui::Separator();
         ImGui::TextWrapped("ImZip is an online image compression utility written by me, 42yeah. It is written in WebAssembly and is therefore crazy fast. Drag & drop photos here and download their compressed versions, in real time.");
 
-        if (ImGui::CollapsingHeader("How imzip works"))
+        if (ImGui::CollapsingHeader("How ImZip works"))
         {
             ImGui::TextWrapped("ImZip performs easy, performant image compression by doing the following to each input images:");
             ImGui::TextWrapped("1. If the image is bigger than the 'threshold' (%.0f, %.0f), the image size is halved;", state.fold_size.x, state.fold_size.y);
             ImGui::TextWrapped("2. The image is re-encoded via the JPG encoder by stb (quality: %d)", state.quality);
+            ImGui::TextWrapped("4/5 of the whole thing is written in C++ and compiled to WASM module using Emscripten, including this interface. stb_image is used to resize and compress the image. miniz is used to bundle up multiple images into an archive (deflate.) The UI is powered by ImGui and Sokol.");
+            if (ImGui::Button("https://emscripten.org"))
+            {
+                linkTo("https://emscripten.org");
+            }
+            if (ImGui::Button("https://github.com/nothings/stb"))
+            {
+                linkTo("https://github.com/nothings/stb");
+            }
+            if (ImGui::Button("https://github.com/tessel/miniz"))
+            {
+                linkTo("https://github.com/tessel/miniz");
+            }
+            if (ImGui::Button("https://github.com/ocornut/imgui"))
+            {
+                linkTo("https://github.com/ocornut/imgui");
+            }
+            if (ImGui::Button("https://42yeah.is/cool"))
+            {
+                linkTo("https://42yeah.is/cool");
+            }
+            ImGui::TextWrapped("If you are using Safari, the links above may not open, and you may have to manually type them in. But do check them out! Those are all cool libraries (hopefully my website is as well)!");
         }
         if (ImGui::CollapsingHeader("Compression Configs"))
         {
@@ -267,15 +296,11 @@ void imzip_ui()
     }
     ImGui::End();
 
-    int negative_offset = 0;
     for (auto it = state.image_windows.begin(); it != state.image_windows.end(); )
     {
-        // Correct the index if image windows are deleted
-        it->image_idx -= negative_offset;
-
         if (it->image_idx < 0 || it->image_idx >= state.images.size())
         {
-            std::cout << "Erasure:" << it->image_idx << ", " << state.images.size() << std::endl;
+            std::cout << "Erasure: " << it->image_idx << ", " << state.images.size() << std::endl;
             it = state.image_windows.erase(it);
             continue;
         }
@@ -308,9 +333,16 @@ void imzip_ui()
 
         if (!it->display)
         {
+            for (auto itt = state.image_windows.begin(); itt != state.image_windows.end(); itt++)
+            {
+                if (itt->image_idx > it->image_idx)
+                {
+                    itt->image_idx--;
+                }
+            }
+
             it = state.image_windows.erase(it);
             state.event_frame = EVENT_FRAME_DRAG;
-            negative_offset++;
             continue;
         }
 
@@ -357,6 +389,7 @@ static void frame(void)
 
     /*=== UI CODE STARTS HERE ===*/
     imzip_ui();
+    ImGui::ShowDemoWindow();
     /*=== UI CODE ENDS HERE ===*/
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
