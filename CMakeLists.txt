@@ -68,7 +68,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     # link with WebGL2
     target_link_options(imzip PRIVATE -sUSE_WEBGL2=1)
     # WASM+JS size optimizations
-    target_link_options(imzip PRIVATE -sASSERTIONS -sMALLOC=emmalloc --closure=1)
+    target_link_options(imzip PRIVATE -sASSERTIONS=0 -sMALLOC=emmalloc --closure=1)
 endif()
 
 # explicitly strip dead code

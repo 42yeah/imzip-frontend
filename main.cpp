@@ -389,7 +389,7 @@ static void frame(void)
 
     /*=== UI CODE STARTS HERE ===*/
     imzip_ui();
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
     /*=== UI CODE ENDS HERE ===*/
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
